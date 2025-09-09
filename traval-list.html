@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>旅行清单</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background-color: #f5f5f5;
+        color: #262626;
+        line-height: 1.6;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        padding: 24px;
+      }
+
+      .header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f1f1f;
+        margin: 0;
+      }
+
+      .reset-btn {
+        background: #1890ff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .reset-btn:hover {
+        background: #40a9ff;
+        transform: translateY(-1px);
+      }
+
+      .reset-btn:active {
+        transform: translateY(0);
+      }
+
+      .reset-btn::before {
+        content: "🔄";
+      }
+
+      .task-list {
+        list-style: none;
+      }
+
+      .task-item {
+        padding: 4px 0;
+        position: relative;
+      }
+
+      .task-content {
+        display: flex;
+        align-items: flex-start;
+        min-height: 28px;
+      }
+
+      .checkbox-wrapper {
+        margin-right: 12px;
+        margin-top: 2px;
+        position: relative;
+      }
+
+      .custom-checkbox {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #d9d9d9;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+      }
+
+      .custom-checkbox:hover {
+        border-color: #1890ff;
+      }
+
+      .custom-checkbox.checked {
+        background: #1890ff;
+        border-color: #1890ff;
+      }
+
+      .custom-checkbox.checked::after {
+        content: "✓";
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .task-label {
+        flex: 1;
+        cursor: pointer;
+        user-select: none;
+        padding-top: 1px;
+        transition: color 0.2s ease;
+      }
+
+      .task-label.must {
+        color: #ff4d4f;
+      }
+
+      input[type="checkbox"]:checked + .custom-checkbox + .task-label {
+        color: #8c8c8c;
+        text-decoration: line-through;
+      }
+
+      .children {
+        margin-left: 28px;
+        border-left: 1px dashed #e8e8e8;
+        padding-left: 12px;
+        margin-top: 4px;
+      }
+
+      .folder {
+        font-weight: 500;
+        color: #595959;
+        padding: 6px 0;
+        cursor: default;
+        display: flex;
+        align-items: center;
+      }
+
+      .folder::before {
+        content: "🐤";
+        margin-right: 6px;
+      }
+
+      .stats {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #f0f0f0;
+        color: #8c8c8c;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .progress-bar {
+        width: 120px;
+        height: 6px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #52c41a;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+      .split-line {
+        height: 1px;
+        background: #e8e8e8;
+        margin: 12px 0;
+        position: relative;
+        left: -28px;
+        width: calc(100% + 28px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>旅行清单</h1>
+        <p>重置请刷新网页</p>
+      </div>
+
+      <div id="task-tree" class="task-list"></div>
+
+      <!-- <div class="stats">
+        <div>已完成: <span id="completed-count">0</span> / 总计: <span id="total-count">0</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div> -->
+    </div>
+
+    <script>
+      const dataList = [
+        {
+          id: 1,
+          name: "证件",
+          children: [
+            { id: 1, name: "身份证", normal: true },
+            { id: 2, name: "驾照", normal: true },
+            { id: 3, name: "split" },
+            { id: 4, name: "护照" },
+          ],
+        },
+        {
+          id: 2,
+          name: "日用品",
+          children: [
+            { id: 1, name: "牙刷", normal: true },
+            { id: 2, name: "毛巾", normal: true },
+            { id: 3, name: "纸巾/湿巾", normal: true },
+            { id: 4, name: "一次性厕所垫" },
+            { id: 5, name: "一次性床垫" },
+            { id: 6, name: "一次性毛巾" },
+            { id: 7, name: "水杯" },
+            { id: 7, name: "洗澡夹头发夹" },
+            { id: 8, name: "split" },
+            { id: 9, name: "m巾" },
+            { id: 10, name: "驱蚊水" },
+            { id: 11, name: "浴帽" },
+          ],
+        },
+        {
+          id: 3,
+          name: "电器",
+          children: [
+            { id: 10, name: "充电线（typec， usb）", normal: true },
+            { id: 11, name: "充电宝（满电可用）", normal: true },
+            { id: 12, name: "相机" },
+            { id: 13, name: "分线器" },
+          ],
+        },
+        {
+          id: 4,
+          name: "衣服",
+          children: [
+            { id: 13, name: "遮阳帽" },
+            { id: 14, name: "鞋套" },
+            { id: 15, name: "雨衣" },
+            { id: 16, name: "迪卡侬口袋外套" },
+          ],
+        },
+        {
+          id: 5,
+          name: "药物",
+          children: [
+            { id: 13, name: "吗丁啉" },
+            { id: 14, name: "消食片" },
+            { id: 15, name: "保济丸" },
+            { id: 16, name: "布洛芬" },
+            { id: 17, name: "创可贴" },
+            { id: 18, name: "消毒药水棉签" },
+            { id: 19, name: "金莲花" },
+          ],
+        },
+        {
+          id: 6,
+          name: "其他",
+          children: [
+            { id: 13, name: "现金" },
+            { id: 14, name: "口罩" },
+            { id: 15, name: "酒精" },
+            { id: 16, name: "拖鞋" },
+            { id: 17, name: "笔" },
+            { id: 18, name: "备用袋子（装杂碎，衣服）" },
+            { id: 19, name: "垃圾袋" },
+            { id: 20, name: "门锁扣" },
+            { id: 21, name: "耳塞" },
+            { id: 22, name: "偏振镜" },
+            { id: 23, name: "除渍笔" },
+            { id: 24, name: "红外检测仪+美纹纸" },
+            {
+              id: 25,
+              name: "游水相关",
+              children: [
+                { id: 13, name: "泳衣" },
+                { id: 14, name: "泳镜" },
+                { id: 15, name: "泳帽" },
+                { id: 16, name: "手机防水袋" },
+              ],
+            },
+          ],
+        },
+      ];
+
+      // 存储所有复选框引用
+      let allCheckboxes = [];
+
+      // 渲染树形结构
+      function renderTree(data, parentElement, level = 0) {
+        let totalCount = 0;
+
+        data.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "task-item";
+
+          if (item.name === "split") {
+            const splitLine = document.createElement("div");
+            splitLine.className = "split-line";
+            li.appendChild(splitLine);
+          } else if (item.children) {
+            // 文件夹节点
+            const folderDiv = document.createElement("div");
+            folderDiv.className = "folder";
+            folderDiv.textContent = item.name;
+            li.appendChild(folderDiv);
+
+            // 渲染子节点
+            const childrenUl = document.createElement("ul");
+            childrenUl.className = "children";
+            const childTotal = renderTree(item.children, childrenUl, level + 1);
+            totalCount += childTotal;
+            li.appendChild(childrenUl);
+          } else {
+            // 叶子节点（复选框）
+            const label = document.createElement("label");
+            label.className = "task-content";
+
+            const checkboxWrapper = document.createElement("div");
+            checkboxWrapper.className = "checkbox-wrapper";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = `task-${item.id}`;
+            checkbox.dataset.id = item.id;
+
+            const customCheckbox = document.createElement("div");
+            customCheckbox.className = "custom-checkbox";
+
+            const taskLabel = document.createElement("span");
+            taskLabel.className = "task-label";
+            if (item.normal) {
+              taskLabel.classList.add("must");
+            }
+            taskLabel.textContent = item.name;
+            taskLabel.htmlFor = `task-${item.id}`;
+
+            checkboxWrapper.appendChild(checkbox);
+            checkboxWrapper.appendChild(customCheckbox);
+            label.appendChild(checkboxWrapper);
+            label.appendChild(taskLabel);
+            li.appendChild(label);
+
+            // 存储复选框引用
+            allCheckboxes.push({
+              checkbox: checkbox,
+              customCheckbox: customCheckbox,
+              taskLabel: taskLabel,
+            });
+
+            totalCount++;
+
+            // 添加事件监听
+            checkbox.addEventListener("change", function () {
+              updateCheckboxState(this, customCheckbox, taskLabel);
+              updateStats();
+            });
+          }
+
+          parentElement.appendChild(li);
+        });
+
+        return totalCount;
+      }
+
+      // 更新复选框状态
+      function updateCheckboxState(checkbox, customCheckbox, taskLabel) {
+        if (checkbox.checked) {
+          customCheckbox.classList.add("checked");
+          taskLabel.style.color = "#8c8c8c";
+          taskLabel.style.textDecoration = "line-through";
+        } else {
+          customCheckbox.classList.remove("checked");
+          taskLabel.style.color = "";
+          taskLabel.style.textDecoration = "";
+        }
+      }
+
+      // 更新统计信息
+      function updateStats() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const completed = Array.from(checkboxes).filter((cb) => cb.checked).length;
+        const total = checkboxes.length;
+        const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+        document.getElementById("completed-count").textContent = completed;
+        document.getElementById("total-count").textContent = total;
+        document.getElementById("progress-fill").style.width = `${percentage}%`;
+      }
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", function () {
+        const taskTree = document.getElementById("task-tree");
+        const totalCount = renderTree(dataList, taskTree);
+
+        // 取消注释统计部分
+        document.querySelector(".stats").style.display = "block";
+        document.getElementById("total-count").textContent = totalCount;
+
+        // 添加重置按钮事件监听
+        document.getElementById("reset-btn").addEventListener("click", resetAllCheckboxes);
+      });
+    </script>
+  </body>
+</html>
