@@ -66,10 +66,6 @@
         transform: translateY(0);
       }
 
-      .reset-btn::before {
-        content: "🔄";
-      }
-
       .task-list {
         list-style: none;
       }
@@ -152,17 +148,25 @@
       }
 
       .folder {
-        font-weight: 500;
-        color: #595959;
-        padding: 6px 0;
-        cursor: default;
-        display: flex;
-        align-items: center;
+        position: relative;
+        padding-left: 24px;
+        cursor: pointer;
+        user-select: none;
       }
 
       .folder::before {
-        content: "🐤";
-        margin-right: 6px;
+        content: "▶";
+        position: absolute;
+        left: 8px;
+        transition: transform 0.2s;
+      }
+
+      .folder.expanded::before {
+        transform: rotate(90deg);
+      }
+
+      .children.collapsed {
+        display: none;
       }
 
       .stats {
@@ -191,12 +195,22 @@
         transition: width 0.3s ease;
       }
       .split-line {
-        height: 1px;
-        background: #e8e8e8;
-        margin: 12px 0;
+        height: 24px; /* 增加高度容纳emoji */
+        background: transparent;
         position: relative;
+        margin: 16px 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .split-line::before {
+        content: "🐤🐤🐤🐤🐤🐤🐤🐤";
+        color: #e8e8e8;
+        letter-spacing: 8px;
+        font-size: 18px;
+        position: absolute;
         left: -28px;
-        width: calc(100% + 28px);
+        white-space: nowrap;
       }
     </style>
   </head>
@@ -204,7 +218,7 @@
     <div class="container">
       <div class="header">
         <h1>旅行清单</h1>
-        <p>重置请刷新网页</p>
+        <p style="color: #8c8c8c">重置请刷新网页</p>
       </div>
 
       <div id="task-tree" class="task-list"></div>
@@ -329,8 +343,21 @@
             // 文件夹节点
             const folderDiv = document.createElement("div");
             folderDiv.className = "folder";
-            folderDiv.textContent = item.name;
+            folderDiv.innerHTML = `
+        <span class="folder-name">${item.name}</span>
+        <span class="item-count">(${item.children.length})</span>
+      `;
             li.appendChild(folderDiv);
+
+            // 添加点击事件
+            folderDiv.addEventListener("click", function () {
+              this.classList.toggle("expanded");
+              childrenUl.classList.toggle("collapsed");
+              updateStats(); // 更新统计时要考虑折叠状态
+            });
+
+            // 默认展开
+            folderDiv.classList.add("expanded");
 
             // 渲染子节点
             const childrenUl = document.createElement("ul");
@@ -419,6 +446,11 @@
       document.addEventListener("DOMContentLoaded", function () {
         const taskTree = document.getElementById("task-tree");
         const totalCount = renderTree(dataList, taskTree);
+
+        document.querySelectorAll(".folder").forEach((folder) => {
+          folder.click(); // 触发默认展开状态
+          folder.click(); // 重置为默认展开
+        });
 
         // 取消注释统计部分
         document.querySelector(".stats").style.display = "block";
