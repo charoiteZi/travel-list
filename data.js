@@ -18,6 +18,7 @@ export const dataList = [
       { id: 3, name: "纸巾/湿巾", normal: true },
       { id: 4, name: "一次性厕所垫" },
       { id: 5, name: "一次性床垫" },
+      { id: 12, name: "一次性枕头套" },
       { id: 6, name: "一次性毛巾" },
       { id: 7, name: "水杯" },
       { id: 7, name: "洗澡夹头发夹" },
@@ -35,6 +36,7 @@ export const dataList = [
       { id: 11, name: "充电宝（满电可用）", normal: true },
       { id: 12, name: "相机" },
       { id: 13, name: "分线器" },
+      { id: 14, name: "手机（真能忘？）" },
     ],
   },
   {
@@ -58,6 +60,7 @@ export const dataList = [
       { id: 17, name: "创可贴" },
       { id: 18, name: "消毒药水棉签" },
       { id: 19, name: "金莲花" },
+      { id: 20, name: "风油精" },
     ],
   },
   {
@@ -76,14 +79,26 @@ export const dataList = [
       { id: 22, name: "偏振镜" },
       { id: 23, name: "除渍笔" },
       { id: 24, name: "红外检测仪+美纹纸" },
+      { id: 25, name: "split" },
       {
-        id: 25,
+        id: 27,
         name: "游水相关",
         children: [
           { id: 13, name: "泳衣" },
           { id: 14, name: "泳镜" },
           { id: 15, name: "泳帽" },
           { id: 16, name: "手机防水袋" },
+        ],
+      },
+      {
+        id: 28,
+        name: "一些可有可无",
+        children: [
+          { id: 13, name: "行李箱泡沫保护（防托运）" },
+          { id: 14, name: "家门钥匙（全家出动）" },
+          { id: 15, name: "羊城通（如果坐地铁过去）" },
+          { id: 16, name: "流量副卡（本叽专属）" },
+          { id: 17, name: "多一条橡皮筋" },
         ],
       },
     ],
