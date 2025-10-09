@@ -47,6 +47,7 @@ export const dataList = [
       { id: 14, name: "鞋套" },
       { id: 15, name: "雨衣" },
       { id: 16, name: "迪卡侬口袋外套" },
+      { id: 17, name: "波鞋（如果要爬山）" },
     ],
   },
   {
