@@ -54,6 +54,7 @@ export const dataList = [
     id: 5,
     name: "药物",
     children: [
+      { id: 21, name: "自己本来要吃的药", normal: true },
       { id: 13, name: "吗丁啉" },
       { id: 14, name: "消食片" },
       { id: 15, name: "保济丸" },
