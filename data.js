@@ -20,6 +20,7 @@ export const dataList = [
       { id: 5, name: "一次性床垫" },
       { id: 12, name: "一次性枕头套" },
       { id: 6, name: "一次性毛巾" },
+      { id: 12, name: "雨伞" },
       { id: 7, name: "水杯" },
       { id: 7, name: "洗澡夹头发夹" },
       { id: 8, name: "split" },
