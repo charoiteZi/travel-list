@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -12,8 +12,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB",
-          "Microsoft YaHei", sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
         background-color: #f5f5f5;
         color: #262626;
         line-height: 1.6;
@@ -33,6 +34,14 @@
         margin-bottom: 20px;
         padding-bottom: 16px;
         border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .header-titles {
+        flex: 1;
       }
 
       h1 {
@@ -42,9 +51,13 @@
         margin: 0;
       }
 
-      .reset-btn {
-        background: #1890ff;
-        color: white;
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .action-btn {
         border: none;
         padding: 8px 16px;
         border-radius: 6px;
@@ -57,6 +70,25 @@
         gap: 6px;
       }
 
+      .save-btn {
+        background: #52c41a;
+        color: white;
+      }
+
+      .save-btn:hover {
+        background: #73d13d;
+        transform: translateY(-1px);
+      }
+
+      .save-btn:active {
+        transform: translateY(0);
+      }
+
+      .reset-btn {
+        background: #1890ff;
+        color: white;
+      }
+
       .reset-btn:hover {
         background: #40a9ff;
         transform: translateY(-1px);
@@ -64,6 +96,27 @@
 
       .reset-btn:active {
         transform: translateY(0);
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #262626;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.25s ease;
+        z-index: 100;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
       }
 
       .task-list {
@@ -217,8 +270,14 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>旅行清单</h1>
-        <p style="color: #8c8c8c">重置请刷新网页</p>
+        <div class="header-titles">
+          <h1>旅行清单</h1>
+          <p style="color: #8c8c8c">进度会自动保存在本机浏览器中</p>
+        </div>
+        <div class="header-actions">
+          <button id="save-btn" class="action-btn save-btn">保存(仅保存到本地浏览器)</button>
+          <button id="reset-btn" class="action-btn reset-btn">重置</button>
+        </div>
       </div>
 
       <div id="task-tree" class="task-list"></div>
@@ -230,6 +289,8 @@
         </div>
       </div> -->
     </div>
+
+    <div id="toast" class="toast"></div>
 
     <script type="module">
       import { dataList } from "./data.js";
@@ -340,16 +401,72 @@
         }
       }
 
+      // localStorage 相关
+      const STORAGE_KEY = "travel-checklist-state";
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 1600);
+      }
+
+      // 保存当前勾选状态到 localStorage
+      function saveState() {
+        const state = {};
+        allCheckboxes.forEach(({ checkbox }) => {
+          state[checkbox.dataset.id] = checkbox.checked;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        showToast("已保存");
+      }
+
+      // 从 localStorage 恢复勾选状态
+      function loadState() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        try {
+          const state = JSON.parse(raw);
+          allCheckboxes.forEach(({ checkbox, customCheckbox, taskLabel }) => {
+            if (state[checkbox.dataset.id]) {
+              checkbox.checked = true;
+              updateCheckboxState(checkbox, customCheckbox, taskLabel);
+            }
+          });
+        } catch (e) {
+          console.error("读取保存的进度失败", e);
+        }
+      }
+
+      // 清空缓存并重置所有勾选状态
+      function resetState() {
+        localStorage.removeItem(STORAGE_KEY);
+        allCheckboxes.forEach(({ checkbox, customCheckbox, taskLabel }) => {
+          checkbox.checked = false;
+          updateCheckboxState(checkbox, customCheckbox, taskLabel);
+        });
+        updateStats();
+        showToast("已重置");
+      }
+
       // 更新统计信息
       function updateStats() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        const completed = Array.from(checkboxes).filter((cb) => cb.checked).length;
+        const completed = Array.from(checkboxes).filter(
+          (cb) => cb.checked,
+        ).length;
         const total = checkboxes.length;
         const percentage = total > 0 ? (completed / total) * 100 : 0;
 
-        document.getElementById("completed-count").textContent = completed;
-        document.getElementById("total-count").textContent = total;
-        document.getElementById("progress-fill").style.width = `${percentage}%`;
+        const completedEl = document.getElementById("completed-count");
+        const totalEl = document.getElementById("total-count");
+        const progressEl = document.getElementById("progress-fill");
+        if (completedEl) completedEl.textContent = completed;
+        if (totalEl) totalEl.textContent = total;
+        if (progressEl) progressEl.style.width = `${percentage}%`;
       }
 
       // 初始化
@@ -362,12 +479,21 @@
           folder.click(); // 重置为默认展开
         });
 
-        // 取消注释统计部分
-        document.querySelector(".stats").style.display = "block";
-        document.getElementById("total-count").textContent = totalCount;
+        // 恢复本地保存的勾选进度
+        loadState();
 
-        // 添加重置按钮事件监听
-        document.getElementById("reset-btn").addEventListener("click", resetAllCheckboxes);
+        // 统计部分（如页面中存在则显示）
+        const statsEl = document.querySelector(".stats");
+        if (statsEl) statsEl.style.display = "block";
+        updateStats();
+
+        // 保存 / 重置 按钮事件监听
+        document
+          .getElementById("save-btn")
+          .addEventListener("click", saveState);
+        document
+          .getElementById("reset-btn")
+          .addEventListener("click", resetState);
       });
     </script>
   </body>
